@@ -1,0 +1,243 @@
+-- 1. Provide a SQL script that initializes the database for the Pet Adoption Platform ”PetPals”. 
+-- 2. Create tables for pets, shelters, donations, adoption events, and participants.  
+-- 3. Define appropriate primary keys, foreign keys, and constraints.  create database petpals;
+use petpals;
+
+create table Pets(
+petid int primary key,
+name varchar(30),
+age int,
+breed varchar(20),
+type enum ('Dog','Cat'),
+availableforadoption bit
+);
+
+create table Shelters(
+shelterid int primary key,
+name varchar(50),
+location varchar(100)
+);
+
+create table donations(
+donationid int primary key,
+donorname varchar(50),
+donationtype varchar(50),
+donationamount decimal(10,2),
+donationitem varchar(50),
+donationdate datetime
+);
+
+create table adoptionevents(
+eventid int primary key,
+eventname varchar(50),
+eventdate datetime,
+location varchar(50)
+);
+
+create table participants(
+participantid int primary key,
+participantname varchar(50),
+participanttype varchar(50),
+eventid int,
+foreign key (eventid) references adoptionevents (eventid)
+);
+
+INSERT INTO Pets (PetID, Name, Age, Breed, Type, AvailableForAdoption)
+VALUES
+(1, 'Bella', 3, 'Labrador', 'Dog', 1),
+(2, 'Whiskers', 2, 'Siamese', 'Cat', 1),
+(3, 'Max', 5, 'German Shepherd', 'Dog', 0),
+(4, 'Mittens', 1, 'Persian', 'Cat', 1),
+(5, 'Charlie', 4, 'Beagle', 'Dog', 1),
+(6, 'Lucy', 2, 'Ragdoll', 'Cat', 0),
+(7, 'Rocky', 3, 'Bulldog', 'Dog', 1);
+
+INSERT INTO Shelters (ShelterID, Name, Location)
+VALUES
+(1, 'Happy Paws Shelter', '123 Bark Street, Dogtown'),
+(2, 'Whiskers & Tails Shelter', '456 Meow Avenue, Catville'),
+(3, 'Furry Friends Shelter', '789 Pawprint Road, Petcity'),
+(4, 'Rescue Haven', '101 Animal Lane, Rescueland'),
+(5, 'Hopeful Hearts Shelter', '202 Love Street, Heartville'),
+(6, 'New Beginnings Shelter', '303 Hope Avenue, Startown'),
+(7, 'Safe Paws Shelter', '404 Animal Way, Safeville');
+
+INSERT INTO Donations (DonationID, DonorName, DonationType, DonationAmount, DonationItem, DonationDate)
+VALUES
+(1, 'John Doe', 'Cash', 500.00, NULL, '2025-04-01 10:00:00'),
+(2, 'Jane Smith', 'Item', NULL, 'Cat Toys', '2025-04-02 12:30:00'),
+(3, 'Michael Johnson', 'Cash', 100.00, NULL, '2025-04-03 14:00:00'),
+(4, 'Emily Davis', 'Item', NULL, 'Dog Bed', '2025-04-04 09:45:00'),
+(5, 'Sarah Lee', 'Cash', 200.00, NULL, '2025-04-05 11:15:00'),
+(6, 'David Brown', 'Item', NULL, 'Cat Litter', '2025-04-06 13:20:00'),
+(7, 'Lisa Green', 'Item', NULL, 'Dog Collar', '2025-04-07 16:30:00');
+
+
+INSERT INTO AdoptionEvents (EventID, EventName, EventDate, Location)
+VALUES
+(1, 'Spring Pet Adoption Fair', '2025-04-10 11:00:00', 'Downtown City Park'),
+(2, 'Weekend Adoption Drive', '2025-04-12 09:00:00', 'Whiskers & Tails Shelter'),
+(3, 'Summer Pet Show', '2025-05-01 10:00:00', 'Furry Friends Shelter'),
+(4, 'Adopt a Pet Day', '2025-05-10 12:00:00', 'Rescue Haven'),
+(5, 'Pets & Families Adoption Event', '2025-06-01 14:00:00', 'Hopeful Hearts Shelter'),
+(6, 'Adoption Weekend', '2025-06-15 11:00:00', 'New Beginnings Shelter'),
+(7, 'Paws and Claws Adoption Fest', '2025-07-01 09:00:00', 'Safe Paws Shelter');
+
+INSERT INTO Participants (ParticipantID, ParticipantName, ParticipantType, EventID)
+VALUES
+(1, 'Happy Paws Shelter', 'Shelter', 1),
+(2, 'Whiskers & Tails Shelter', 'Shelter', 2),
+(3, 'Alice Thompson', 'Adopter', 1),
+(4, 'Mark Wilson', 'Adopter', 2),
+(5, 'Furry Friends Shelter', 'Shelter', 3),
+(6, 'Sarah Lee', 'Adopter', 5),
+(7, 'Safe Paws Shelter', 'Shelter', 7);
+
+-- 4. Ensure the script handles potential errors, such as if the database or tables already exist. 
+
+create table Pets (
+    petid int primary key,
+    name varchar(30),
+    age int,
+    breed varchar(20),
+    type enum('Dog', 'Cat'),
+    availableforadoption bit
+);
+
+-- 5 .Write an SQL query that retrieves a list of available pets from the "Pets" table //
+select name,age,breed,type from Pets where availableforadoption = 1;
+
+
+-- 6.Write an SQL query that retrieves the names of participants (shelters and adopters) registered for a specific adoption event. Use a parameter to specify the event ID. Ensure that the query joins the necessary tables to retrieve the participant names and types. 
+select p.participantname,p.participanttype from participants p join adoptionevents 
+a on p.eventid = a.eventid;
+
+-- 7 Create a stored procedure in SQL that allows a shelter to update its information (name and location) in the "Shelters" table. Use parameters to pass the shelter ID and the new information. Ensure that the procedure performs the update and handles potential errors, such as an invalid shelter ID. 
+
+DELIMITER $$
+
+create procedure UpdateShelterInfo(
+    in p_shelterid int,
+    in p_new_name varchar(50),
+    in p_new_location varchar(100)
+)
+begin
+    -- Update shelter information
+    update shelters
+    set name = p_new_name, location = p_new_location
+    where shelterid = p_shelterid;
+end$$
+call updateshlterinfo()
+
+DELIMITER ;
+
+-- 8 Write an SQL query that calculates and retrieves the total donation amount for each shelter (by shelter name) from the "Donations" table. The result should include the shelter name and the total donation amount. Ensure that the query handles cases where a shelter has received no donations.
+ALTER TABLE donations ADD COLUMN shelterid INT;
+alter table donations add constraint fk_donations_shelter foreign key (shelterid) references shelters(shelterid);
+UPDATE donations SET shelterid = 1 WHERE donationid = 1;
+UPDATE donations SET shelterid = 2 WHERE donationid = 2;
+UPDATE donations SET shelterid = 3 WHERE donationid = 3;
+UPDATE donations SET shelterid = 1 WHERE donationid = 4;
+UPDATE donations SET shelterid = 5 WHERE donationid = 5;
+UPDATE donations SET shelterid = 6 WHERE donationid = 6;
+UPDATE donations SET shelterid = 2 WHERE donationid = 7;
+
+
+
+select s.shelterid,s.name as Shelter_name,sum(d.donationamount) as Total_donations
+from shelters s left join donations d on s.shelterid = d.shelterid
+group by s.shelterid,s.name order by Total_donations desc;
+-- 9 Write an SQL query that retrieves the names of pets from the "Pets" table that do not have an owner (i.e., where "OwnerID" is null). Include the pet's name, age, breed, and type in the result set. 
+alter table pets add ownerid int null;
+update pets set ownerid = null where petid in (1,3,4);
+update pets set ownerid = 101 where petid = 2;
+update pets set ownerid = 102 where petid = 5;
+update pets set ownerid = 103 where petid = 7;
+select * from pets where ownerid is null;
+
+-- 10  Write an SQL query that retrieves the total donation amount for each month and year (e.g., January 2023) from the "Donations" table. The result should include the month-year and the corresponding total donation amount. Ensure that the query handles cases where no donations were made in a specific month-year. 
+select date_format(donationdate, '%M %Y %D %T') as month_year,
+sum(donationamount) as total_donations from donations
+group by month_year;
+
+-- 11 Retrieve a list of distinct breeds for all pets that are either aged between 1 and 3 years or older than 5 years. 
+select distinct name,age,type from pets where (age between 1 and 3 or age > 5);
+
+-- 12 Retrieve a list of pets and their respective shelters where the pets are currently available for adoption. 
+select p.name,p.age,p.type,s.name,s.location from pets p join shelters s
+on p.shelterid = s.shelterid where p.availableforadoption = 1;
+
+-- 13 Find the total number of participants in events organized by shelters located in specific city. 
+ALTER TABLE adoptionevents ADD COLUMN shelterid INT;
+UPDATE adoptionevents SET shelterid = 1 WHERE eventid = 1;
+UPDATE adoptionevents SET shelterid = 2 WHERE eventid = 2;
+
+select s.location,count(c.participantid) as total_participants from shelters s
+join adoptionevents a on s.shelterid = a.shelterid
+join participants c on a.eventid = c.eventid
+where s.location = '404 Animal Way, Safeville' group by s.location;
+
+-- 14 Retrieve a list of unique breeds for pets with ages between 1 and 5 years. 
+select distinct breed from pets where age between 1 and 5;
+
+-- 15  Find the pets that have not been adopted by selecting their information from the 'Pet' table. 
+select name,type,age from pets where availableforadoption = 1;
+
+-- 16 . Retrieve the names of all adopted pets along with the adopter's name from the 'Adoption' and 'User' tables. 
+CREATE TABLE Adoption (
+    adoptionid INT PRIMARY KEY,
+    petid INT,
+    adoptername VARCHAR(50),
+    adoptiondate DATETIME,
+    FOREIGN KEY (petid) REFERENCES Pets(petid)
+);
+INSERT INTO Adoption (adoptionid, petid, adoptername, adoptiondate)
+VALUES
+(1, 3, 'Alice Thompson', '2025-04-01 10:30:00'),
+(2, 6, 'Mark Wilson', '2025-04-02 12:00:00'),
+(3, 1, 'Emily Davis', '2025-04-03 15:45:00'),
+(4, 4, 'John Carter', '2025-04-05 09:20:00'),
+(5, 5, 'Sophia Miller', '2025-04-06 14:10:00'),
+(6, 2, 'Michael Brown', '2025-04-07 11:30:00'),
+(7, 7, 'Sarah Johnson', '2025-04-08 16:50:00');
+
+select p.name as Petname,a.adoptername as Adoptername from Pets p
+join adoption a on p.petid = a.petid;
+
+-- 17 Retrieve a list of all shelters along with the count of pets currently available for adoption in each shelter. 
+ALTER TABLE Pets ADD shelterid INT;
+
+UPDATE Pets SET shelterid = 1 WHERE PetID = 1;
+UPDATE Pets SET shelterid = 2 WHERE PetID = 2;
+UPDATE Pets SET shelterid = 1 WHERE PetID = 3;
+UPDATE Pets SET shelterid = 3 WHERE PetID = 4;
+UPDATE Pets SET shelterid = 2 WHERE PetID = 5;
+UPDATE Pets SET shelterid = 3 WHERE PetID = 6;
+UPDATE Pets SET shelterid = 1 WHERE PetID = 7;
+
+select s.shelterid,s.name as shelter_name,count(p.petid) as Available_pets_count
+from shelters s left join pets p on s.shelterid = p.shelterid where p.AvailableForAdoption = 1
+group by s.shelterid,shelter_name ;
+
+
+
+-- 18 Find pairs of pets from the same shelter that have the same breed. 
+ALTER TABLE Pets ADD COLUMN shelterid INT;
+UPDATE Pets SET shelterid = 1 WHERE petid IN (1, 2);
+UPDATE Pets SET shelterid = 2 WHERE petid IN (3, 4);
+UPDATE Pets SET shelterid = 3 WHERE petid IN (5, 6);
+UPDATE Pets SET shelterid = 4 WHERE petid IN (7);
+
+select p1.petid ,p1.name,p2.petid,p2.name,p1.breed,p1.shelterid from pets p1
+join pets p2 on p1.shelterid = p2.shelterid and p1.breed = p2.breed and p1.petid < p2.petid
+order by p1.shelterid,p1.breed;
+
+-- 19 List all possible combinations of shelters and adoption events. 
+select s.shelterid,s.name as Shelter_name,a.eventid,a.eventname,a.eventdate,a.location as event_location
+from shelters s cross join adoptionevents a;
+
+-- 20 Determine the shelter that has the highest number of adopted pets. 
+
+select s.shelterid, s.name as Shelter_name , count(p.petid) as adopted_pet_count
+from shelters s join pets p on s.shelterid = p.shelterid where p.availableforadoption = 0
+group by s.shelterid,Shelter_name order by adopted_pet_count desc limit 1;
